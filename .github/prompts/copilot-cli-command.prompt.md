@@ -16,18 +16,18 @@ Copilot `<args>` requirements:
 10. Pass the prompt to the copilot commmand on the server using the `-p "Read '.copilot.prompt.md' file for the actual prompt"` flag.
 11. Ensure that the copilot command is executed in the correct working directory on the remote server, which should be the same directory where the syncript command is being executed locally. This can be achieved by determining the current working directory on the local machine and then changing to that directory on the remote server before executing the copilot command.
 12. Provide a way to stop a running copilot command on the remote server using a `syncript copilot stop <session-id>` command that sends a termination signal to the corresponding process on the remote server and updates the log file accordingly.
-13. If no `--model` specified on local command (`sycript copilot`), use this : `--model claude-sonnet-4.6` as the default model for the copilot command on the remote server.
+13. If no `--model` specified on local command (`sycript copilot`), use this : `--model claude-sonnet-4.5` as the default model for the copilot command on the remote server.
 
 A sample f a `copilot` command execution on the server which should be wrapper in a `nohup` asyc command:
 ```bash
-copilot --yolo -p "Read '.copilot.prompt.md' file for the actual prompt" --model claude-sonnet-4.6  --share  ~/.syncript/logs/copilot-123e4567-e89b-12d3-a456-426614174000.log
+copilot --yolo -p "Read '.copilot.prompt.md' file for the actual prompt" --model claude-sonnet-4.5  --share  ~/.syncript/logs/copilot-123e4567-e89b-12d3-a456-426614174000.log
 ```
 
 all new sycript commands should be added to the `syncript` CLI tool and should follow the same structure and conventions as the existing commands. The implementation should be modular and maintainable, allowing for easy future enhancements or modifications to the copilot command functionality.
 
 List of new sycript commands to be added:
 1. `syncript copilot <args>`: Executes the copilot command on the remote server with the specified arguments and streams the output back to the local terminal in real-time.
-   *. All server arguments passed to the `syncript copilot` command should be forwarded to the copilot command on the remote server, with the addition of the `--share` argument to specify the log file path and the `--yolo` flag to enable auto-pilot mode. If no `--model` argument is provided, it should default to `claude-sonnet-4.6`.
+   *. All server arguments passed to the `syncript copilot` command should be forwarded to the copilot command on the remote server, with the addition of the `--share` argument to specify the log file path and the `--yolo` flag to enable auto-pilot mode. If no `--model` argument is provided, it should default to `claude-sonnet-4.5`.
 2. `syncript copilot logs`: Lists all available copilot log files in the `~/.syncript/logs/` directory with their corresponding session IDs and timestamps.
 3. `syncript copilot logs <session-id>`: Retrieves and displays the contents of the log file corresponding to the specified session ID.
 4. `syncript copilot stop <session-id>`: Stops the running copilot command on the remote server corresponding to the specified session ID and updates the log file accordingly.

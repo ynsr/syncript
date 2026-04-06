@@ -463,7 +463,7 @@ def main():
     )
     run_p.add_argument("-v", "--verbose", action="store_true", help="Show extra output")
     run_p.add_argument("--model", metavar="MODEL", default=None,
-                       help="Model for copilot (default: claude-sonnet-4.6)")
+                       help="Model for copilot (default: claude-sonnet-4.5)")
     run_p.add_argument("--resume", metavar="SESSION_ID", default=None,
                        help="Resume streaming an existing copilot session log (use 'latest' for the most recent)")
     run_p.add_argument("--autopilot", action="store_true",

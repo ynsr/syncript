@@ -9,6 +9,6 @@ copilot() {
     echo "  tmux ls                  # List active sessions" >&2
     return 1
   fi
-  # command copilot --autopilot --model claude-sonnet-4.6 "$@"
+  # command copilot --autopilot --model claude-sonnet-4.5 "$@"
   command copilot --autopilot --model claude-sonnet-4.5 "$@"
 }
