@@ -88,6 +88,8 @@ Options:
   --server HOST       SSH server hostname or IP
   --port N            SSH port (default: 22)
   --base-remote PATH  Base remote path prepended to relative remote roots
+  --llm-model MODEL   Default model for syncript copilot run (default: gpt-5.3-codex)
+  --socks-proxy URL   Optional SOCKS proxy (sample: socks5://localhost:10808)
   --profile NAME      Profile name (default: "default")
   --force             Overwrite an existing .syncript
   -n, --dry-run       Preview without writing files
@@ -196,8 +198,8 @@ profiles:
     port: 22
     local_root: "./"
     remote_root: "projects/myrepo"   # relative to defaults.base_remote
-    llm_model: "gpt-5.3-codex"       # used by syncript copilot run when --model is omitted
-    socks_proxy: "socks5://host:1080" # optional: route sync network traffic via SOCKS5
+    llm_model: "gpt-5.3-codex"       # default model used by syncript copilot run
+    socks_proxy: "socks5://localhost:10808" # optional: route network traffic via SOCKS proxy
 
   - name: staging
     server: "staging.example.com"
@@ -221,7 +223,7 @@ defaults:
 | `profiles[].local_root` | Local directory to sync |
 | `profiles[].remote_root` | Remote path (absolute, or relative to `defaults.base_remote`) |
 | `profiles[].llm_model` | Default model for `syncript copilot run` when `--model` is not provided |
-| `profiles[].socks_proxy` | SOCKS5 proxy URL for sync network operations (e.g. `socks5://host:1080`) |
+| `profiles[].socks_proxy` | SOCKS proxy URL for sync network operations (e.g. `socks5://localhost:10808`) |
 | `defaults.base_remote` | Base path on remote, prepended to relative `remote_root` values |
 | `defaults.server` | Default server used during `syncript init` |
 | `defaults.port` | Default port used during `syncript init` |

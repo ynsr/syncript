@@ -329,6 +329,25 @@ class TestInitCommand(unittest.TestCase):
         self.assertIn("profiles", data)
         self.assertEqual(data["profiles"][0]["server"], "myhost.com")
         self.assertEqual(data["profiles"][0]["port"], 2222)
+        self.assertEqual(data["profiles"][0]["llm_model"], "gpt-5.3-codex")
+        self.assertEqual(data["profiles"][0]["socks_proxy"], "")
+
+    def test_init_accepts_llm_model_and_socks_proxy(self):
+        """'syncript init' writes llm_model and socks_proxy from CLI options."""
+        rc, out, err = run_syncript(
+            "init",
+            "--server", "myhost.com",
+            "--port", "22",
+            "--remote", "projects/test",
+            "--llm-model", "gpt-5.4-mini",
+            "--socks-proxy", "socks5://localhost:10808",
+            cwd=self.cwd,
+        )
+        self.assertEqual(rc, 0, msg=f"stderr: {err}")
+        import yaml
+        data = yaml.safe_load((self.cwd / ".syncript").read_text(encoding="utf-8"))
+        self.assertEqual(data["profiles"][0]["llm_model"], "gpt-5.4-mini")
+        self.assertEqual(data["profiles"][0]["socks_proxy"], "socks5://localhost:10808")
 
 
 # ── Tests: installer idempotency ──────────────────────────────────────────────
@@ -362,6 +381,8 @@ class TestInstallerIdempotency(unittest.TestCase):
             f"--server=testserver.example.com",
             f"--base-remote=/home/testuser",
             f"--port=22",
+            f"--llm-model=gpt-5.3-codex",
+            f"--socks-proxy=socks5://localhost:10808",
         ]
         if extra_args:
             cmd.extend(extra_args)
@@ -399,6 +420,8 @@ class TestInstallerIdempotency(unittest.TestCase):
         self.assertTrue(config_file.exists(), f"Config not found at {config_file}")
         content = config_file.read_text(encoding="utf-8")
         self.assertIn("testserver.example.com", content)
+        self.assertIn('llm_model: "gpt-5.3-codex"', content)
+        self.assertIn('socks_proxy: "socks5://localhost:10808"', content)
 
     def test_installer_config_not_overwritten_on_second_run(self):
         """install-unix.sh does not overwrite config on second run (no --force)."""

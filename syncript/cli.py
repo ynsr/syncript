@@ -107,6 +107,24 @@ def cmd_init(args):
 
     # Resolve base_remote
     base_remote = args.base_remote or g_defaults.get("base_remote", "")
+    llm_model = args.llm_model or g_defaults.get("llm_model", "gpt-5.3-codex")
+    if not args.llm_model and sys.stdin.isatty():
+        val = input(f"Default LLM model for copilot [{llm_model}]: ").strip()
+        if val:
+            llm_model = val
+
+    socks_proxy = args.socks_proxy
+    if socks_proxy is None:
+        socks_proxy = g_defaults.get("socks_proxy", "")
+    if args.socks_proxy is None and sys.stdin.isatty():
+        val = input(
+            "SOCKS proxy URL (optional, e.g. socks5://localhost:10808) "
+            f"[{socks_proxy}]: "
+        ).strip()
+        if val:
+            socks_proxy = val
+    if socks_proxy is None:
+        socks_proxy = ""
 
     profile_name = args.profile or "default"
 
@@ -131,6 +149,8 @@ def cmd_init(args):
         f"    user: {_yq(user)}",
         f"    local_root: {_yq(local_root_yaml)}",
         f"    remote_root: {_yq(remote_root)}",
+        f"    llm_model: {_yq(llm_model)}",
+        f"    socks_proxy: {_yq(socks_proxy)}",
         f"    batch_file_size: {_cfg.BATCH_FILE_SIZE}",
     ]
 
@@ -399,6 +419,10 @@ def main():
                         help="SSH port (default: 22)")
     init_p.add_argument("--base-remote", metavar="PATH",
                         help="Base remote path prepended to relative remote roots")
+    init_p.add_argument("--llm-model", metavar="MODEL", default=None,
+                        help="Default model used by 'syncript copilot run' (default: gpt-5.3-codex)")
+    init_p.add_argument("--socks-proxy", metavar="URL", default=None,
+                        help="SOCKS proxy URL for network operations, e.g. socks5://localhost:10808")
     init_p.add_argument("--profile", metavar="NAME", default="default",
                         help="Profile name to create (default: default)")
     init_p.add_argument("--force", action="store_true",

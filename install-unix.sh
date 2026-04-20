@@ -6,6 +6,7 @@
 #   ./install-unix.sh              # install
 #   ./install-unix.sh --uninstall  # remove installed files
 #   ./install-unix.sh --force      # reinstall even if already present
+#   ./install-unix.sh --llm-model=gpt-5.3-codex --socks-proxy=socks5://localhost:10808
 #
 # What this script does:
 #   1. Checks that python3 and pip are available.
@@ -40,6 +41,8 @@ UNINSTALL=0
 BASE_REMOTE=""
 DEFAULT_SERVER=""
 DEFAULT_PORT="22"
+LLM_MODEL=""
+SOCKS_PROXY=""
 
 # ── Argument parsing ──────────────────────────────────────────────────────────
 
@@ -50,6 +53,8 @@ for arg in "$@"; do
         --base-remote=*) BASE_REMOTE="${arg#*=}" ;;
         --server=*)      DEFAULT_SERVER="${arg#*=}" ;;
         --port=*)        DEFAULT_PORT="${arg#*=}" ;;
+        --llm-model=*)   LLM_MODEL="${arg#*=}" ;;
+        --socks-proxy=*) SOCKS_PROXY="${arg#*=}" ;;
         -h|--help)
             sed -n '2,/^set -e/p' "$0" | grep '^#' | sed 's/^# \?//'
             exit 0
@@ -191,6 +196,17 @@ else
         printf 'Base remote path (e.g. /home/user, leave blank to skip): '
         read -r BASE_REMOTE
     fi
+    if [ -z "$LLM_MODEL" ] && [ -t 0 ]; then
+        printf 'Default LLM model for copilot [gpt-5.3-codex]: '
+        read -r LLM_MODEL
+    fi
+    if [ -z "$SOCKS_PROXY" ] && [ -t 0 ]; then
+        printf 'SOCKS proxy URL (optional, sample: socks5://localhost:10808): '
+        read -r SOCKS_PROXY
+    fi
+
+    llm_model_val="${LLM_MODEL:-gpt-5.3-codex}"
+    socks_proxy_val="${SOCKS_PROXY}"
 
     cat > "$CONFIG_FILE" << YAML_EOF
 # syncript global configuration
@@ -203,6 +219,8 @@ else
 #   defaults.base_remote  — prepended to relative remote_root values during init
 #   defaults.server       — default SSH server hostname
 #   defaults.port         — default SSH port
+#   defaults.llm_model    — default model for syncript copilot run
+#   defaults.socks_proxy  — optional SOCKS proxy for network operations
 
 profiles:
   - name: default
@@ -215,6 +233,8 @@ defaults:
   base_remote: "${BASE_REMOTE:-/home/user}"
   server: "${DEFAULT_SERVER:-example.com}"
   port: ${DEFAULT_PORT}
+  llm_model: "${llm_model_val}"
+  socks_proxy: "${socks_proxy_val}"
 YAML_EOF
     info "Created sample config → ${CONFIG_FILE}"
 fi

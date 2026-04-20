@@ -6,6 +6,7 @@
 #   .\install-windows.ps1 -Uninstall       # remove installed files
 #   .\install-windows.ps1 -Force           # reinstall even if already present
 #   .\install-windows.ps1 -Server myhost -BaseRemote /home/user -Port 22
+#   .\install-windows.ps1 -LlmModel gpt-5.3-codex -SocksProxy socks5://localhost:10808
 #
 # What this script does:
 #   1. Checks that Python 3 and pip are available.
@@ -21,7 +22,9 @@ param(
     [string]$InstallDir = "",
     [string]$Server     = "",
     [string]$BaseRemote = "",
-    [int]$Port          = 22
+    [int]$Port          = 22,
+    [string]$LlmModel   = "",
+    [string]$SocksProxy = ""
 )
 
 Set-StrictMode -Version Latest
@@ -177,9 +180,17 @@ if ((Test-Path $ConfigFile) -and -not $Force) {
     if (-not $BaseRemote -and [Environment]::UserInteractive) {
         $BaseRemote = Read-Host "Base remote path (e.g. /home/user, leave blank to skip)"
     }
+    if (-not $LlmModel -and [Environment]::UserInteractive) {
+        $LlmModel = Read-Host "Default LLM model for copilot (default: gpt-5.3-codex)"
+    }
+    if (-not $SocksProxy -and [Environment]::UserInteractive) {
+        $SocksProxy = Read-Host "SOCKS proxy URL (optional, sample: socks5://localhost:10808)"
+    }
 
     $baseRemoteVal = if ($BaseRemote) { $BaseRemote } else { "/home/user" }
     $serverVal     = if ($Server)     { $Server }     else { "example.com" }
+    $llmModelVal   = if ($LlmModel)   { $LlmModel }   else { "gpt-5.3-codex" }
+    $socksProxyVal = if ($SocksProxy) { $SocksProxy } else { "" }
 
     @"
 # syncript global configuration
@@ -192,6 +203,8 @@ if ((Test-Path $ConfigFile) -and -not $Force) {
 #   defaults.base_remote  — prepended to relative remote_root values during init
 #   defaults.server       — default SSH server hostname
 #   defaults.port         — default SSH port
+#   defaults.llm_model    — default model for syncript copilot run
+#   defaults.socks_proxy  — optional SOCKS proxy for network operations
 
 profiles:
   - name: default
@@ -204,6 +217,8 @@ defaults:
   base_remote: "$baseRemoteVal"
   server: "$serverVal"
   port: $Port
+  llm_model: "$llmModelVal"
+  socks_proxy: "$socksProxyVal"
 "@ | Set-Content -Path $ConfigFile -Encoding UTF8
     Write-Info "Created sample config → $ConfigFile"
 }
