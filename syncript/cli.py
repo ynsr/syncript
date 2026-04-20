@@ -275,14 +275,17 @@ def cmd_sync(args):
     profile = _cfg.get_profile(data, args.profile or "default")
     _cfg.apply_profile(profile)
 
+    poll_interval = args.poll_interval if args.poll_interval is not None else 5
+    poll_timeout = args.poll_timeout if args.poll_timeout is not None else 120
+
     run_sync(
         dry_run=args.dry_run,
         verbose=args.verbose,
         force=args.force,
         push_only=args.push_only,
         pull_only=args.pull_only,
-        poll_interval=args.poll_interval,
-        poll_timeout=args.poll_timeout,
+        poll_interval=poll_interval,
+        poll_timeout=poll_timeout,
         llm_model=args.llm_model,
         socks_proxy=args.socks_proxy,
         reset=args.reset,
@@ -437,9 +440,9 @@ def main():
                         help="Only local→remote")
     sync_p.add_argument("--pull-only", action="store_true",
                         help="Only remote→local")
-    sync_p.add_argument("--poll-interval", type=int, default=5, metavar="N",
+    sync_p.add_argument("--poll-interval", type=int, default=None, metavar="N",
                         help="Seconds between remote-scan polls (default: 5)")
-    sync_p.add_argument("--poll-timeout", type=int, default=120, metavar="N",
+    sync_p.add_argument("--poll-timeout", type=int, default=None, metavar="N",
                         help="Max seconds to wait for remote scan (default: 120)")
     sync_p.add_argument("--llm-model", metavar="MODEL", default=None,
                         help="Default model to use for 'syncript copilot run' (overrides profile)")
@@ -506,12 +509,12 @@ def main():
         cmd_init(args)
     elif args.command == "sync":
         if args.reset and (
-            args.dry_run or args.verbose or args.force or args.push_only or args.pull_only
-            or args.poll_interval != 5 or args.poll_timeout != 120
-            or args.llm_model is not None or args.socks_proxy is not None
-            or args.profile != "default"
+            args.push_only
+            or args.pull_only
+            or args.poll_interval is not None
+            or args.poll_timeout is not None
         ):
-            sync_p.error("--reset cannot be used with other flags")
+            sync_p.error("--reset cannot be used with --push-only, --pull-only, --poll-interval, or --poll-timeout")
         if args.push_only and args.pull_only:
             sync_p.error("--push-only and --pull-only are mutually exclusive")
         cmd_sync(args)

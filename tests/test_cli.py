@@ -242,10 +242,52 @@ class TestSyncCommand(unittest.TestCase):
             self.assertEqual(kwargs["socks_proxy"], "socks5://user:pass@127.0.0.1:1080")
             self.assertFalse(kwargs["reset"])
 
-    def test_sync_reset_rejects_other_flags(self):
-        rc, out, err = run_syncript("sync", "--reset", "--dry-run")
-        self.assertNotEqual(rc, 0)
-        self.assertIn("--reset cannot be used with other flags", err)
+    def test_sync_reset_allows_non_restricted_flags(self):
+        import syncript.cli as cli
+        with mock.patch.object(
+            sys,
+            "argv",
+            [
+                "syncript",
+                "sync",
+                "--reset",
+                "--dry-run",
+                "--verbose",
+                "--force",
+                "--profile",
+                "my-profile",
+                "--llm-model",
+                "gpt-5.1-codex",
+                "--socks-proxy",
+                "socks5://user:pass@127.0.0.1:1080",
+            ],
+        ), mock.patch("syncript.cli.cmd_sync") as cmd_sync_mock:
+            cli.main()
+        cmd_sync_mock.assert_called_once()
+        args = cmd_sync_mock.call_args.args[0]
+        self.assertTrue(args.reset)
+        self.assertTrue(args.dry_run)
+        self.assertTrue(args.verbose)
+        self.assertTrue(args.force)
+        self.assertEqual(args.profile, "my-profile")
+        self.assertEqual(args.llm_model, "gpt-5.1-codex")
+        self.assertEqual(args.socks_proxy, "socks5://user:pass@127.0.0.1:1080")
+
+    def test_sync_reset_rejects_restricted_flags(self):
+        restricted_cases = [
+            ("--push-only",),
+            ("--pull-only",),
+            ("--poll-interval", "10"),
+            ("--poll-timeout", "300"),
+        ]
+        for extra_args in restricted_cases:
+            with self.subTest(extra_args=extra_args):
+                rc, out, err = run_syncript("sync", "--reset", *extra_args)
+                self.assertNotEqual(rc, 0)
+                self.assertIn(
+                    "--reset cannot be used with --push-only, --pull-only, --poll-interval, or --poll-timeout",
+                    err,
+                )
 
 
 # ── Tests: syncript init CLI ──────────────────────────────────────────────────
