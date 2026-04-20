@@ -11,15 +11,40 @@ def _compile_pattern(raw: str):
     p = raw.strip()
     if not p or p.startswith("#"):
         return None
-    escaped = re.escape(p)
-    escaped = escaped.replace(r"\*\*", "§DS§")
-    escaped = escaped.replace(r"\*", "[^/]*")
-    escaped = escaped.replace(r"\?", "[^/]")
-    escaped = escaped.replace("§DS§", ".*")
-    if not escaped.startswith("/"):
+    has_recursive_suffix = p.endswith("/**")
+    core = p[:-3] if has_recursive_suffix else p
+
+    escaped_parts: list[str] = []
+    i = 0
+    while i < len(core):
+        ch = core[i]
+        if ch == "*":
+            if i + 1 < len(core) and core[i + 1] == "*":
+                # "**/" means zero or more directory segments.
+                if i + 2 < len(core) and core[i + 2] == "/":
+                    escaped_parts.append(r"(?:.*/)?")
+                    i += 3
+                    continue
+                escaped_parts.append(".*")
+                i += 2
+                continue
+            escaped_parts.append(r"[^/]*")
+            i += 1
+            continue
+        if ch == "?":
+            escaped_parts.append(r"[^/]")
+            i += 1
+            continue
+        escaped_parts.append(re.escape(ch))
+        i += 1
+
+    escaped = "".join(escaped_parts)
+    if not core.startswith("/"):
         escaped = r"(^|.*\/)" + escaped
+    if has_recursive_suffix:
+        escaped += r"(\/.*)?"
     try:
-        return re.compile(escaped + r"(/.*)?$")
+        return re.compile(escaped + r"$")
     except re.error:
         return None
 
@@ -70,6 +95,18 @@ def _stignore_to_find_prunes(root: Path) -> str:
         if not line or line.startswith("#"):
             continue
 
+        if line.endswith("/**"):
+            tail = line[:-3]  # remove trailing '/**'
+            if tail.startswith("./"):
+                tail = tail[2:]
+            if tail.startswith("**/"):
+                tail = tail[3:]
+            if tail:
+                # Prune both the directory itself and its contents.
+                path_prunes.append(f'-path "*/{tail}"')
+                path_prunes.append(f'-path "*/{tail}/*"')
+            continue
+
         if line.startswith("**/"):
             tail = line[3:]  # everything after the **/
             if not tail:
@@ -89,14 +126,8 @@ def _stignore_to_find_prunes(root: Path) -> str:
         elif line.startswith("./"):
             # ③ path with segments but no leading **/ — use -path, ignore leading ./
             path_prunes.append(f'-path "*/{line[2:]}"')
-        elif line.endswith("/**"):
-            tail = line[:-3]  # remove trailing '/**'
-            if tail.startswith("./"):
-                tail = tail[2:]
-            if tail:
-                path_prunes.append(
-                    f'-path "*/{tail}"')  # else: leading-slash absolute patterns, *.ext/sub, etc. — skip;
-        #       is_ignored() handles them after the scan.
+        # else: leading-slash absolute patterns, *.ext/sub, etc. — skip;
+        # is_ignored() handles them after the scan.
 
     path_prunes.append('-path "*/.git/*"')  # always ignore .git contents
     all_prunes = name_prunes + path_prunes

@@ -765,5 +765,56 @@ class TestRemoteScanCommand(unittest.TestCase):
                 cfg.REMOTE_TMP = old_remote_tmp
 
 
+class TestIgnorePatterns(unittest.TestCase):
+    """Tests for .stignore matching and prune-expression generation."""
+
+    def test_globstar_target_patterns_match_expected_files(self):
+        from syncript.utils.ignore_patterns import is_ignored, load_ignore_patterns
+
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            (root / ".stignore").write_text(
+                "\n".join([
+                    "**/target/classes/**",
+                    "**/target/*.jar",
+                    "**/target/*.jar*",
+                    "**/target/**/*.class",
+                ]) + "\n",
+                encoding="utf-8",
+            )
+            patterns = load_ignore_patterns(root)
+
+            self.assertTrue(is_ignored("module/target/classes/com/acme/Foo.class", patterns))
+            self.assertTrue(is_ignored("module/target/app.jar", patterns))
+            self.assertTrue(is_ignored("module/target/app.jar.original", patterns))
+            # "**/target/**/*.class" must also match files directly under target/.
+            self.assertTrue(is_ignored("module/target/Foo.class", patterns))
+
+            self.assertFalse(is_ignored("module/src/Foo.class", patterns))
+            self.assertFalse(is_ignored("module/target/app.zip", patterns))
+
+    def test_find_prunes_include_recursive_target_paths(self):
+        from syncript.utils.ignore_patterns import _stignore_to_find_prunes
+
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            (root / ".stignore").write_text(
+                "\n".join([
+                    "**/target/classes/**",
+                    "**/target/*.jar",
+                    "**/target/*.jar*",
+                    "**/target/**/*.class",
+                ]) + "\n",
+                encoding="utf-8",
+            )
+
+            prune_expr = _stignore_to_find_prunes(root)
+            self.assertIn('-path "*/target/classes"', prune_expr)
+            self.assertIn('-path "*/target/classes/*"', prune_expr)
+            self.assertIn('-path "*/target/*.jar"', prune_expr)
+            self.assertIn('-path "*/target/*.jar*"', prune_expr)
+            self.assertIn('-path "*/target/**/*.class"', prune_expr)
+
+
 if __name__ == "__main__":
     unittest.main()
