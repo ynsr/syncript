@@ -5,6 +5,7 @@ import time
 import tempfile
 import uuid
 import gzip
+import shlex
 from pathlib import Path
 from ..core.ssh_manager import SSHManager
 from .. import config as _cfg
@@ -26,7 +27,7 @@ def start_remote_scan(mgr: SSHManager, patterns: list) -> str:
     prune_expr = _stignore_to_find_prunes(_cfg.LOCAL_ROOT)
 
     # find outputs: rel_path \t mtime_epoch \t size
-    remote_root_str = str(_cfg.REMOTE_ROOT)
+    remote_root_str = shlex.quote(str(_cfg.REMOTE_ROOT))
 
     # Use nohup + sh so it survives even if our SSH channel drops.
     # Pipe through gzip to produce a compressed TSV, then write a small
