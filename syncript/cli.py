@@ -163,6 +163,8 @@ def cmd_init(args):
         ]
 
     content = "\n".join(lines) + "\n"
+    task_prompt_template = Path(__file__).with_name("task.prompt.template.md")
+    task_prompt_content = task_prompt_template.read_text(encoding="utf-8")
 
     stignore_content = """# File extensions
 **/*.jar
@@ -218,6 +220,13 @@ tests/__pycache__/**
         else:
             if args.verbose:
                 print(f"{stignore_path} already exists; would not overwrite.")
+        task_prompt_path = Path.cwd() / "task.prompt.md"
+        if not task_prompt_path.exists():
+            print(f"[dry-run] Would write {task_prompt_path}:")
+            print(task_prompt_content)
+        else:
+            if args.verbose:
+                print(f"{task_prompt_path} already exists; would not overwrite.")
         return
 
     target.write_text(content, encoding="utf-8")
@@ -233,6 +242,14 @@ tests/__pycache__/**
     else:
         if args.verbose:
             print(f"{stignore_path} already exists; not modified.")
+
+    task_prompt_path = Path.cwd() / "task.prompt.md"
+    if not task_prompt_path.exists():
+        task_prompt_path.write_text(task_prompt_content, encoding="utf-8")
+        print(f"Created {task_prompt_path}")
+    else:
+        if args.verbose:
+            print(f"{task_prompt_path} already exists; not modified.")
 
     if args.verbose:
         print(content)

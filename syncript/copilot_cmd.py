@@ -93,17 +93,17 @@ def _ensure_logs_dir(ssh: SSHManager):
 
 
 def _transfer_prompt_file(ssh: SSHManager, remote_cwd: str):
-    """Upload llm-prompt.md from the local cwd to the remote cwd, if present."""
-    local_prompt = Path.cwd() / "llm-prompt.md"
+    """Upload task.prompt.md from the local cwd to the remote cwd, if present."""
+    local_prompt = Path.cwd() / "task.prompt.md"
     if not local_prompt.exists():
         return
-    remote_prompt = f"{remote_cwd}/llm-prompt.md"
+    remote_prompt = f"{remote_cwd}/task.prompt.md"
     try:
         ssh.exec(f"mkdir -p {remote_cwd}", timeout=15)
         ssh.sftp_put(str(local_prompt), remote_prompt)
         log(f"[copilot] transferred {local_prompt.name} → {remote_prompt}")
     except Exception as exc:
-        warn(f"[copilot] could not transfer llm-prompt.md: {exc}")
+        warn(f"[copilot] could not transfer task.prompt.md: {exc}")
 
 
 def _cleanup_old_logs(ssh: SSHManager):
@@ -339,7 +339,7 @@ def run_copilot(extra_args: list, model=None, autopilot: bool = False, verbose: 
     autopilot_flag = "--autopilot " if autopilot else ""
     copilot_cmd = (
         f"copilot --yolo {autopilot_flag}"
-        f'-p "Read \'llm-prompt.md\' file for the actual prompt" '
+        f'-p "Read \'task.prompt.md\' file for the actual prompt" '
         f"--share {log_file} "
         f"--resume {session_id} "
         + " ".join(copilot_args)
@@ -367,7 +367,7 @@ def run_copilot(extra_args: list, model=None, autopilot: bool = False, verbose: 
     _ensure_logs_dir(ssh)
     _cleanup_old_logs(ssh)
 
-    # Transfer llm-prompt.md to remote cwd if it exists locally
+    # Transfer task.prompt.md to remote cwd if it exists locally
     _transfer_prompt_file(ssh, remote_cwd)
 
     # Print the command being executed on the remote server
@@ -603,7 +603,7 @@ def resume_copilot(
     autopilot_flag = "--autopilot " if autopilot else ""
     copilot_cmd = (
         f"copilot --yolo {autopilot_flag}"
-        f'-p "Read \'llm-prompt.md\' file for the actual prompt" '
+        f'-p "Read \'task.prompt.md\' file for the actual prompt" '
         f"--share {log_file} "
         f"--resume {display_id} "
         + " ".join(copilot_args)

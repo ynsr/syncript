@@ -13,14 +13,14 @@ Copilot `<args>` requirements:
 7. If the connection to the remote server is lost while the copilot command is running, ensure that the command continues to run on the remote server and that the log file is still being updated with the output of the command. Then try to reconnect and when the connection is re-established, stream any new output from the log file back to the local terminal in real-time.
 8. Implement a cleanup mechanism to remove old log files after a certain period (e.g., 30 days) to prevent the logs directory from growing indefinitely. This can be done by adding a scheduled task on the remote server that periodically checks the logs directory and deletes files older than the specified retention period.
 9. run the copilot command on the server with auto-pilot enabled using the `--yolo` flag.
-10. Pass the prompt to the copilot commmand on the server using the `-p "Read 'llm-prompt.md' file for the actual prompt"` flag.
+10. Pass the prompt to the copilot commmand on the server using the `-p "Read 'task.prompt.md' file for the actual prompt"` flag.
 11. Ensure that the copilot command is executed in the correct working directory on the remote server, which should be the same directory where the syncript command is being executed locally. This can be achieved by determining the current working directory on the local machine and then changing to that directory on the remote server before executing the copilot command.
 12. Provide a way to stop a running copilot command on the remote server using a `syncript copilot stop <session-id>` command that sends a termination signal to the corresponding process on the remote server and updates the log file accordingly.
 13. If no `--model` specified on local command (`sycript copilot`), use this : `--model claude-sonnet-4.5` as the default model for the copilot command on the remote server.
 
 A sample f a `copilot` command execution on the server which should be wrapper in a `nohup` asyc command:
 ```bash
-copilot --yolo -p "Read 'llm-prompt.md' file for the actual prompt" --model claude-sonnet-4.5  --share  ~/.syncript/logs/copilot-123e4567-e89b-12d3-a456-426614174000.log
+copilot --yolo -p "Read 'task.prompt.md' file for the actual prompt" --model claude-sonnet-4.5  --share  ~/.syncript/logs/copilot-123e4567-e89b-12d3-a456-426614174000.log
 ```
 
 all new sycript commands should be added to the `syncript` CLI tool and should follow the same structure and conventions as the existing commands. The implementation should be modular and maintainable, allowing for easy future enhancements or modifications to the copilot command functionality.

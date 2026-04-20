@@ -277,6 +277,34 @@ class TestInitCommand(unittest.TestCase):
         self.assertIn("myhost.com", content)
         self.assertIn("projects/test", content)
         self.assertIn("/home/user", content)
+        self.assertTrue((self.cwd / "task.prompt.md").exists(), "task.prompt.md should have been created")
+
+    def test_init_creates_task_prompt_from_template(self):
+        """'syncript init' copies task.prompt.template.md to task.prompt.md."""
+        rc, out, err = run_syncript(
+            "init",
+            "--server", "myhost.com",
+            "--remote", "projects/test",
+            cwd=self.cwd,
+        )
+        self.assertEqual(rc, 0, msg=f"stderr: {err}")
+        task_prompt = self.cwd / "task.prompt.md"
+        self.assertTrue(task_prompt.exists(), "task.prompt.md should have been created")
+        expected = (REPO_ROOT / "syncript" / "task.prompt.template.md").read_text(encoding="utf-8")
+        self.assertEqual(task_prompt.read_text(encoding="utf-8"), expected)
+
+    def test_init_does_not_overwrite_existing_task_prompt(self):
+        """'syncript init' does not overwrite an existing task.prompt.md."""
+        existing = self.cwd / "task.prompt.md"
+        existing.write_text("my custom prompt\n", encoding="utf-8")
+        rc, out, err = run_syncript(
+            "init",
+            "--server", "myhost.com",
+            "--remote", "projects/test",
+            cwd=self.cwd,
+        )
+        self.assertEqual(rc, 0, msg=f"stderr: {err}")
+        self.assertEqual(existing.read_text(encoding="utf-8"), "my custom prompt\n")
 
     def test_init_refuses_overwrite(self):
         """'syncript init' refuses to overwrite existing .syncript without --force."""
@@ -318,6 +346,7 @@ class TestInitCommand(unittest.TestCase):
         self.assertEqual(rc, 0, msg=f"stderr: {err}")
         syncript_file = self.cwd / ".syncript"
         self.assertFalse(syncript_file.exists(), ".syncript should NOT be created in dry-run")
+        self.assertFalse((self.cwd / "task.prompt.md").exists(), "task.prompt.md should NOT be created in dry-run")
         self.assertIn("dry-run", out)
 
     def test_init_creates_valid_yaml(self):
