@@ -770,6 +770,73 @@ class TestConflictStateSnapshot(unittest.TestCase):
         self.assertEqual(plan["to_pull"], [])
         self.assertEqual(plan["to_delete_r"], ["orphan.txt"])
 
+
+class TestProgressInitialization(unittest.TestCase):
+    """Tests for progress shape normalization and reset-mode initialization."""
+
+    def test_load_progress_normalizes_missing_and_invalid_keys(self):
+        import syncript.config as cfg
+        from syncript.state.progress_manager import load_progress
+
+        with tempfile.TemporaryDirectory() as tmp:
+            orig_local_root = cfg.LOCAL_ROOT
+            cfg.LOCAL_ROOT = Path(tmp)
+            try:
+                (Path(tmp) / ".sync_progress.json").write_text(
+                    '{"pushed":"not-a-list","pulled":["ok"],"deleted_r":null}',
+                    encoding="utf-8",
+                )
+                progress = load_progress()
+            finally:
+                cfg.LOCAL_ROOT = orig_local_root
+
+        self.assertEqual(progress["pushed"], [])
+        self.assertEqual(progress["pulled"], ["ok"])
+        self.assertEqual(progress["deleted_r"], [])
+        self.assertEqual(progress["deleted_l"], [])
+
+    def test_sync_reset_bootstraps_progress_keys(self):
+        import syncript.config as cfg
+        from syncript.core.sync_engine import run_sync
+        from pathlib import PurePosixPath
+
+        with tempfile.TemporaryDirectory() as tmp:
+            local_root = Path(tmp)
+            (local_root / "a.txt").write_text("x", encoding="utf-8")
+
+            orig_local_root = cfg.LOCAL_ROOT
+            orig_remote_root = cfg.REMOTE_ROOT
+            try:
+                cfg.LOCAL_ROOT = local_root
+                cfg.REMOTE_ROOT = PurePosixPath("/remote")
+
+                def _assert_progress_shape(mgr, batch, dry_run, state, progress):
+                    self.assertIn("pushed", progress)
+                    self.assertIn("pulled", progress)
+                    self.assertIn("deleted_r", progress)
+                    self.assertIn("deleted_l", progress)
+                    return 1, 1
+
+                with mock.patch("syncript.core.sync_engine.load_ignore_patterns", return_value=[]), \
+                     mock.patch("syncript.core.sync_engine.check_existing_conflicts", return_value=True), \
+                     mock.patch("syncript.core.sync_engine.clear_state"), \
+                     mock.patch("syncript.core.sync_engine.clear_progress"), \
+                     mock.patch("syncript.core.sync_engine.save_state"), \
+                     mock.patch("syncript.core.sync_engine.save_progress"), \
+                     mock.patch("syncript.core.sync_engine.remove_skipped_deletions"), \
+                     mock.patch("syncript.core.sync_engine.start_remote_scan", return_value="/tmp/scan.done"), \
+                     mock.patch("syncript.core.sync_engine.local_list_all", return_value={"a.txt": (1.0, 1)}), \
+                     mock.patch("syncript.core.sync_engine.poll_remote_scan", return_value={}), \
+                     mock.patch("syncript.core.sync_engine.push_batch", side_effect=_assert_progress_shape) as push_mock, \
+                     mock.patch("syncript.core.sync_engine.SSHManager") as ssh_cls:
+                    run_sync(dry_run=False, verbose=False, reset=True)
+                    push_mock.assert_called_once()
+                    ssh_cls.return_value.disconnect.assert_called_once()
+            finally:
+                cfg.LOCAL_ROOT = orig_local_root
+                cfg.REMOTE_ROOT = orig_remote_root
+
+
 class TestMakeSizeBatches(unittest.TestCase):
     """Tests for _make_size_batches and _estimate_compressed_size helpers."""
 

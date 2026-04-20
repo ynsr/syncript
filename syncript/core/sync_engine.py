@@ -15,7 +15,7 @@ from ..operations.transfer import push_batch, pull_batch
 from ..operations.delete import delete_remote, _confirm_deletions_by_leaf
 from ..operations.conflict import check_existing_conflicts, save_conflict
 from ..state.state_manager import load_state, save_state, clear_state, load_skipped_deletions, save_skipped_deletions, remove_skipped_deletions
-from ..state.progress_manager import load_progress, save_progress, clear_progress
+from ..state.progress_manager import load_progress, save_progress, clear_progress, new_progress
 
 # File extensions that compress well (text/source files).
 # Binary/media/archive extensions are treated as incompressible.
@@ -268,11 +268,11 @@ def run_sync(dry_run=False, verbose=False, force=False,
         pull_only = False
 
     state = {} if force else load_state()
-    progress = {} if force else load_progress()
+    progress = new_progress() if force else load_progress()
     skipped_deletions = set() if force else load_skipped_deletions()
     if reset:
         state.clear()
-        progress.clear()
+        progress = new_progress()
         skipped_deletions.clear()
 
     if progress and not force:
