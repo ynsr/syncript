@@ -20,6 +20,7 @@
 **/target/*.jar
 **/target/*.jar*
 **/target/**/*.class
+**/surefire-reports/**
 temp/**
 .idea/**
 .stfolder/**
