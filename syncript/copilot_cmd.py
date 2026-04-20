@@ -31,7 +31,7 @@ from .utils.logging import log, warn
 REMOTE_LOGS_DIR = "~/.syncript/logs"
 _FNAME_TS_RE = re.compile(r"(\d{8})-(\d{6})\.log$")
 LOG_RETENTION_DAYS = 30
-DEFAULT_MODEL = "claude-sonnet-4.5"
+DEFAULT_MODEL = "gpt-5.3-codex"
 STREAM_POLL_INTERVAL = 10    # seconds between log polls
 RECONNECT_WAIT = 5           # seconds before reconnect attempt
 
