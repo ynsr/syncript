@@ -641,6 +641,39 @@ class TestConflictStateSnapshot(unittest.TestCase):
         self.assertEqual(plan["to_push"], [(rel, mock.ANY)])
         self.assertEqual(plan["to_push"][0][0], rel)
 
+    def test_push_only_overwrites_conflict_with_local_version(self):
+        """In push-only mode, changed-on-both-sides files are pushed, not marked conflict."""
+        from syncript.core.sync_engine import decide
+
+        rel = "tests/test_cli.py"
+        local_files = {rel: (200.0, 20)}
+        remote_files = {rel: (210.0, 21)}
+        state = {
+            rel: {"lmtime": 100.0, "lsize": 10, "rmtime": 100.0, "rsize": 10}
+        }
+
+        plan = decide(local_files, remote_files, state, {}, True, False)
+        self.assertEqual(plan["conflicts"], [])
+        self.assertEqual(plan["to_pull"], [])
+        self.assertEqual(plan["to_push"], [(rel, mock.ANY)])
+        self.assertEqual(plan["to_push"][0][0], rel)
+
+    def test_pull_only_overwrites_conflict_with_remote_version(self):
+        """In pull-only mode, changed-on-both-sides files are pulled, not marked conflict."""
+        from syncript.core.sync_engine import decide
+
+        rel = "tests/test_cli.py"
+        local_files = {rel: (200.0, 20)}
+        remote_files = {rel: (210.0, 21)}
+        state = {
+            rel: {"lmtime": 100.0, "lsize": 10, "rmtime": 100.0, "rsize": 10}
+        }
+
+        plan = decide(local_files, remote_files, state, {}, False, True)
+        self.assertEqual(plan["conflicts"], [])
+        self.assertEqual(plan["to_push"], [])
+        self.assertEqual(plan["to_pull"], [rel])
+
 class TestMakeSizeBatches(unittest.TestCase):
     """Tests for _make_size_batches and _estimate_compressed_size helpers."""
 

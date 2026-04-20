@@ -172,6 +172,12 @@ def decide(local_files: dict[str, tuple[float, int]],
             continue
 
         if l_changed and r_changed:
+            if push_only and not pull_only:
+                plan["to_push"].append((rel, _cfg.LOCAL_ROOT / rel))
+                continue
+            if pull_only and not push_only:
+                plan["to_pull"].append(rel)
+                continue
             # Both changed — check if they're actually the same size+mtime
             # (can happen on first run with matching files)
             if abs(l_mtime - r_mtime) <= _cfg.MTIME_TOLERANCE and l_size == r_size:
