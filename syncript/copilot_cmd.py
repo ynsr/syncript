@@ -325,7 +325,7 @@ def run_copilot(extra_args: list, model=None, autopilot: bool = False, verbose: 
     timestamp = time.strftime("%Y%m%d-%H%M%S")
     log_file = _log_path(session_id, folder_name=folder_name, timestamp=timestamp)
     remote_cwd = _resolve_remote_cwd()
-    effective_model = model or DEFAULT_MODEL
+    effective_model = model or _cfg.LLM_MODEL or DEFAULT_MODEL
 
     # Build copilot args, ensuring --model and required flags are present
     copilot_args = list(extra_args or [])
@@ -592,7 +592,7 @@ def resume_copilot(
     except Exception:
         start_offset = 0
 
-    effective_model = model or DEFAULT_MODEL
+    effective_model = model or _cfg.LLM_MODEL or DEFAULT_MODEL
     copilot_args = list(extra_args or [])
     if "--model" not in copilot_args:
         copilot_args.extend(["--model", effective_model])

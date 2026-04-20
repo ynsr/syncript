@@ -14,6 +14,7 @@ import subprocess
 import sys
 import tempfile
 import unittest
+from unittest import mock
 from pathlib import Path
 
 
@@ -104,6 +105,8 @@ class TestLoadProfile(unittest.TestCase):
         import syncript.config as cfg
         cfg.SSH_HOST = "example.com"
         cfg.SSH_PORT = 22
+        cfg.LLM_MODEL = None
+        cfg.SOCKS_PROXY = None
         cfg.LOCAL_ROOT = Path(".")
         from pathlib import PurePosixPath
         cfg.REMOTE_ROOT = PurePosixPath("/")
@@ -187,6 +190,55 @@ class TestLoadProfile(unittest.TestCase):
         data = cfg.load_syncript_file(p)
         profile = cfg.get_profile(data, "nonexistent")
         self.assertEqual(profile["server"], "only.example.com")
+
+    def test_apply_profile_sets_llm_model_and_socks_proxy(self):
+        """apply_profile honours llm_model and socks_proxy keys."""
+        import syncript.config as cfg
+        cfg.apply_profile({
+            "llm_model": "claude-sonnet-4.5",
+            "socks_proxy": "socks5://host:1080",
+        })
+        self.assertEqual(cfg.LLM_MODEL, "claude-sonnet-4.5")
+        self.assertEqual(cfg.SOCKS_PROXY, "socks5://host:1080")
+
+
+class TestSyncCommand(unittest.TestCase):
+    """Tests for sync CLI option forwarding."""
+
+    def test_cmd_sync_forwards_llm_model_and_socks_proxy(self):
+        import argparse
+        import syncript.cli as cli
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            (root / ".syncript").write_text(
+                "profiles:\n"
+                "  - name: default\n"
+                "    server: host\n"
+                "    port: 22\n"
+                "    user: root\n"
+                "    local_root: .\n"
+                "    remote_root: /tmp\n",
+                encoding="utf-8",
+            )
+            args = argparse.Namespace(
+                profile="default",
+                dry_run=True,
+                verbose=False,
+                force=False,
+                push_only=False,
+                pull_only=False,
+                poll_interval=5,
+                poll_timeout=120,
+                llm_model="gpt-5.1-codex",
+                socks_proxy="socks5://user:pass@127.0.0.1:1080",
+            )
+            with mock.patch("syncript.config.find_syncript", return_value=root / ".syncript"), \
+                 mock.patch("syncript.core.sync_engine.run_sync") as run_sync_mock:
+                cli.cmd_sync(args)
+            run_sync_mock.assert_called_once()
+            kwargs = run_sync_mock.call_args.kwargs
+            self.assertEqual(kwargs["llm_model"], "gpt-5.1-codex")
+            self.assertEqual(kwargs["socks_proxy"], "socks5://user:pass@127.0.0.1:1080")
 
 
 # ── Tests: syncript init CLI ──────────────────────────────────────────────────
@@ -586,6 +638,31 @@ class TestMakeSizeBatches(unittest.TestCase):
         """Empty input produces empty output."""
         from syncript.core.sync_engine import _make_size_batches
         self.assertEqual(_make_size_batches([], {}, 512 * 1024), [])
+
+
+class TestSocksProxyParsing(unittest.TestCase):
+    """Tests for SOCKS proxy URL parsing."""
+
+    def test_parse_socks_proxy_with_auth(self):
+        from syncript.core.ssh_manager import _parse_socks_proxy_url
+        host, port, user, password = _parse_socks_proxy_url("socks5://alice:secret@proxy.local:1080")
+        self.assertEqual(host, "proxy.local")
+        self.assertEqual(port, 1080)
+        self.assertEqual(user, "alice")
+        self.assertEqual(password, "secret")
+
+    def test_parse_socks_proxy_without_auth(self):
+        from syncript.core.ssh_manager import _parse_socks_proxy_url
+        host, port, user, password = _parse_socks_proxy_url("socks5://127.0.0.1:9050")
+        self.assertEqual(host, "127.0.0.1")
+        self.assertEqual(port, 9050)
+        self.assertIsNone(user)
+        self.assertIsNone(password)
+
+    def test_rejects_non_socks5_url(self):
+        from syncript.core.ssh_manager import _parse_socks_proxy_url
+        with self.assertRaises(ValueError):
+            _parse_socks_proxy_url("http://proxy.local:8080")
 
 
 if __name__ == "__main__":

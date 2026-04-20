@@ -279,6 +279,8 @@ def cmd_sync(args):
         pull_only=args.pull_only,
         poll_interval=args.poll_interval,
         poll_timeout=args.poll_timeout,
+        llm_model=args.llm_model,
+        socks_proxy=args.socks_proxy,
     )
 
 
@@ -428,6 +430,10 @@ def main():
                         help="Seconds between remote-scan polls (default: 5)")
     sync_p.add_argument("--poll-timeout", type=int, default=120, metavar="N",
                         help="Max seconds to wait for remote scan (default: 120)")
+    sync_p.add_argument("--llm-model", metavar="MODEL", default=None,
+                        help="Default model to use for 'syncript copilot run' (overrides profile)")
+    sync_p.add_argument("--socks-proxy", metavar="URL", default=None,
+                        help="SOCKS5 proxy for sync network operations, e.g. socks5://user:pass@host:port")
 
     # ── status ────────────────────────────────────────────────────────────────
     status_p = subparsers.add_parser(

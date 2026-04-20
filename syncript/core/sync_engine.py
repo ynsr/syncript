@@ -213,8 +213,14 @@ def decide(local_files: dict[str, tuple[float, int]],
 
 def run_sync(dry_run=False, verbose=False, force=False,
              push_only=False, pull_only=False,
-             poll_interval=5, poll_timeout=120):
+             poll_interval=5, poll_timeout=120,
+             llm_model=None, socks_proxy=None):
     set_verbose(verbose)
+
+    if llm_model:
+        _cfg.LLM_MODEL = llm_model
+    if socks_proxy:
+        _cfg.SOCKS_PROXY = socks_proxy
 
     print(f"\n{'=' * 64}")
     print(f"  Sync  {_cfg.LOCAL_ROOT}")
