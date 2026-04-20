@@ -101,6 +101,13 @@ def save_state(state: dict):
         warn("Failed to save state file (CSV).")
 
 
+def clear_state():
+    """Remove state file after reset or successful cleanup."""
+    f = get_state_file()
+    if f.exists():
+        f.unlink()
+
+
 def load_skipped_deletions() -> set:
     """Load the set of rel paths the user chose not to delete."""
     f = get_skipped_deletions_file()

@@ -268,6 +268,7 @@ def cmd_sync(args):
         poll_timeout=args.poll_timeout,
         llm_model=args.llm_model,
         socks_proxy=args.socks_proxy,
+        reset=args.reset,
     )
 
 
@@ -413,6 +414,8 @@ def main():
                         help="Show every file, not just actions")
     sync_p.add_argument("-f", "--force", action="store_true",
                         help="Ignore state+progress cache (full rescan)")
+    sync_p.add_argument("--reset", action="store_true",
+                        help="Reset sync state/progress and start fresh local→remote sync with remote pruning")
     sync_p.add_argument("--push-only", action="store_true",
                         help="Only local→remote")
     sync_p.add_argument("--pull-only", action="store_true",
@@ -485,6 +488,13 @@ def main():
     if args.command == "init":
         cmd_init(args)
     elif args.command == "sync":
+        if args.reset and (
+            args.dry_run or args.verbose or args.force or args.push_only or args.pull_only
+            or args.poll_interval != 5 or args.poll_timeout != 120
+            or args.llm_model is not None or args.socks_proxy is not None
+            or args.profile != "default"
+        ):
+            sync_p.error("--reset cannot be used with other flags")
         if args.push_only and args.pull_only:
             sync_p.error("--push-only and --pull-only are mutually exclusive")
         cmd_sync(args)

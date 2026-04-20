@@ -227,6 +227,7 @@ class TestSyncCommand(unittest.TestCase):
                 force=False,
                 push_only=False,
                 pull_only=False,
+                reset=False,
                 poll_interval=5,
                 poll_timeout=120,
                 llm_model="gpt-5.1-codex",
@@ -239,6 +240,12 @@ class TestSyncCommand(unittest.TestCase):
             kwargs = run_sync_mock.call_args.kwargs
             self.assertEqual(kwargs["llm_model"], "gpt-5.1-codex")
             self.assertEqual(kwargs["socks_proxy"], "socks5://user:pass@127.0.0.1:1080")
+            self.assertFalse(kwargs["reset"])
+
+    def test_sync_reset_rejects_other_flags(self):
+        rc, out, err = run_syncript("sync", "--reset", "--dry-run")
+        self.assertNotEqual(rc, 0)
+        self.assertIn("--reset cannot be used with other flags", err)
 
 
 # ── Tests: syncript init CLI ──────────────────────────────────────────────────
@@ -673,6 +680,24 @@ class TestConflictStateSnapshot(unittest.TestCase):
         self.assertEqual(plan["conflicts"], [])
         self.assertEqual(plan["to_push"], [])
         self.assertEqual(plan["to_pull"], [rel])
+
+    def test_reset_mode_prunes_remote_only_files(self):
+        """Reset-mode planning deletes remote-only files even with empty state."""
+        from syncript.core.sync_engine import decide
+
+        plan = decide(
+            local_files={},
+            remote_files={"orphan.txt": (200.0, 20)},
+            state={},
+            progress={},
+            push_only=True,
+            pull_only=False,
+            skipped_deletions=set(),
+            prune_remote_extras=True,
+        )
+        self.assertEqual(plan["to_push"], [])
+        self.assertEqual(plan["to_pull"], [])
+        self.assertEqual(plan["to_delete_r"], ["orphan.txt"])
 
 class TestMakeSizeBatches(unittest.TestCase):
     """Tests for _make_size_batches and _estimate_compressed_size helpers."""

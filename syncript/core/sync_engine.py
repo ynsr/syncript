@@ -14,7 +14,7 @@ from ..operations.scanner import start_remote_scan, poll_remote_scan, local_list
 from ..operations.transfer import push_batch, pull_batch
 from ..operations.delete import delete_remote, _confirm_deletions_by_leaf
 from ..operations.conflict import check_existing_conflicts, save_conflict
-from ..state.state_manager import load_state, save_state, load_skipped_deletions, save_skipped_deletions, remove_skipped_deletions
+from ..state.state_manager import load_state, save_state, clear_state, load_skipped_deletions, save_skipped_deletions, remove_skipped_deletions
 from ..state.progress_manager import load_progress, save_progress, clear_progress
 
 # File extensions that compress well (text/source files).
@@ -91,7 +91,8 @@ def decide(local_files: dict[str, tuple[float, int]],
            progress: dict,
            push_only: bool,
            pull_only: bool,
-           skipped_deletions: set = None) -> dict:
+           skipped_deletions: set = None,
+           prune_remote_extras: bool = False) -> dict:
     """
     Returns a plan:
     {
@@ -148,6 +149,12 @@ def decide(local_files: dict[str, tuple[float, int]],
 
         # ── Only remote ──────────────────────────────────────────────────────
         if r_meta and not l_meta:
+            if prune_remote_extras:
+                if rel not in done_del_r and rel not in skipped_deletions:
+                    plan["to_delete_r"].append(rel)
+                elif rel in skipped_deletions:
+                    vlog(f"  [SKIP-DEL] {rel} (user skipped deletion)")
+                continue
             if prev_lmtime is not None and rel not in done_del_r:
                 # Was synced before, now missing locally → local deleted it
                 if not push_only and rel not in skipped_deletions:
@@ -228,7 +235,8 @@ def decide(local_files: dict[str, tuple[float, int]],
 def run_sync(dry_run=False, verbose=False, force=False,
              push_only=False, pull_only=False,
              poll_interval=5, poll_timeout=120,
-             llm_model=None, socks_proxy=None):
+             llm_model=None, socks_proxy=None,
+             reset=False):
     set_verbose(verbose)
 
     if llm_model:
@@ -251,9 +259,21 @@ def run_sync(dry_run=False, verbose=False, force=False,
     if not check_existing_conflicts(dry_run):
         return
 
+    if reset:
+        clear_state()
+        clear_progress()
+        print("Sync state and progress have been reset. Starting a new sync operation from scratch...")
+        force = True
+        push_only = True
+        pull_only = False
+
     state = {} if force else load_state()
     progress = {} if force else load_progress()
     skipped_deletions = set() if force else load_skipped_deletions()
+    if reset:
+        state.clear()
+        progress.clear()
+        skipped_deletions.clear()
 
     if progress and not force:
         pushed_n = len(progress.get("pushed", []))
@@ -307,7 +327,8 @@ def run_sync(dry_run=False, verbose=False, force=False,
 
         # ── 4. Decide what to do ───────────────────────────────────────────
         plan = decide(local_files, remote_files, state, progress,
-                      push_only, pull_only, skipped_deletions)
+                      push_only, pull_only, skipped_deletions,
+                      prune_remote_extras=reset)
 
         # Exclude .git entries from deletion plans so they are not counted or acted on.
         filtered_del_r = [r for r in plan["to_delete_r"] if not _is_git_path(r)]
