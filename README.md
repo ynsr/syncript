@@ -186,6 +186,76 @@ No in-progress sync session.
 
 ---
 
+### `syncript copilot`
+
+Runs GitHub Copilot CLI on the configured remote project directory, streams live output, and keeps per-session logs on the remote host.
+
+```bash
+syncript copilot [--profile NAME] [-v] ACTION ...
+
+Actions:
+  run [options] [-- COPILOT_ARGS...]
+  logs [SESSION_ID|latest]
+  stop SESSION_ID
+```
+
+#### `syncript copilot run`
+
+```bash
+syncript copilot run [options] [-- COPILOT_ARGS...]
+
+Options:
+  --model MODEL         Model passed to copilot (default: gpt-5.3-codex or profile llm_model)
+  --resume SESSION_ID   Re-launch and continue an existing session (or "latest")
+  --autopilot           Pass --autopilot to copilot
+  -v, --verbose         Show extra output
+```
+
+When a run starts, syncript prints the session ID:
+
+```text
+--- copilot session <SESSION_ID> ---
+```
+
+Use that ID for log lookup and stopping a running session.
+
+#### `syncript copilot logs`
+
+```bash
+# List available session logs
+syncript copilot logs
+
+# View the latest session log
+syncript copilot logs latest
+
+# View a specific session log
+syncript copilot logs 123e4567-e89b-12d3-a456-426614174000
+```
+
+#### `syncript copilot stop`
+
+```bash
+syncript copilot stop 123e4567-e89b-12d3-a456-426614174000
+```
+
+This sends SIGTERM to the matching remote process and appends a stop marker to its log.
+
+#### Examples
+
+```bash
+# Start a new remote copilot session and stream output
+syncript copilot run --model gpt-5.3-codex -- "Fix failing test in sync scanner"
+
+# Resume the most recent session
+syncript copilot run --resume latest
+
+# Inspect logs and stop a running session
+syncript copilot logs
+syncript copilot stop 123e4567-e89b-12d3-a456-426614174000
+```
+
+---
+
 ## Config File Schema (YAML)
 
 Both the global config (`~/.config/syncript/config.yaml`) and the project config (`.syncript`) use the same YAML schema:
