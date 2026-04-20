@@ -271,11 +271,6 @@ def cmd_sync(args):
     profile = _cfg.get_profile(data, args.profile or "default")
     _cfg.apply_profile(profile)
 
-    if args.llm_model:
-        _cfg.LLM_MODEL = args.llm_model
-    if args.socks_proxy:
-        _cfg.SOCKS_PROXY = args.socks_proxy
-
     run_sync(
         dry_run=args.dry_run,
         verbose=args.verbose,
