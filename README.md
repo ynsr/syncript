@@ -144,9 +144,23 @@ Options:
   --pull-only         Only remote → local
   --poll-interval N   Seconds between remote-scan polls (default: 5)
   --poll-timeout N    Max seconds to wait for remote scan (default: 120)
+  --llm-model MODEL   Default model used by `syncript copilot run` (overrides profile)
+  --socks-proxy URL   Route sync SSH/network operations via SOCKS5 proxy
 ```
 
 **How `.syncript` discovery works:** syncript searches the current directory, then each parent directory in turn until it finds a `.syncript` file or reaches the filesystem root. This means you can run `syncript sync` from any subdirectory of your project.
+
+**Examples:**
+```bash
+# Use a project-default Copilot model for later `syncript copilot run`
+syncript sync --llm-model claude-sonnet-4.5
+
+# Route all sync remote operations (including SSH) through a SOCKS5 proxy
+syncript sync --socks-proxy socks5://host:1080
+
+# SOCKS5 proxy with authentication
+syncript sync --socks-proxy socks5://username:password@host:1080
+```
 
 ---
 
@@ -182,6 +196,8 @@ profiles:
     port: 22
     local_root: "./"
     remote_root: "projects/myrepo"   # relative to defaults.base_remote
+    llm_model: "gpt-5.3-codex"       # used by syncript copilot run when --model is omitted
+    socks_proxy: "socks5://host:1080" # optional: route sync network traffic via SOCKS5
 
   - name: staging
     server: "staging.example.com"
@@ -204,6 +220,8 @@ defaults:
 | `profiles[].port` | SSH port |
 | `profiles[].local_root` | Local directory to sync |
 | `profiles[].remote_root` | Remote path (absolute, or relative to `defaults.base_remote`) |
+| `profiles[].llm_model` | Default model for `syncript copilot run` when `--model` is not provided |
+| `profiles[].socks_proxy` | SOCKS5 proxy URL for sync network operations (e.g. `socks5://host:1080`) |
 | `defaults.base_remote` | Base path on remote, prepended to relative `remote_root` values |
 | `defaults.server` | Default server used during `syncript init` |
 | `defaults.port` | Default port used during `syncript init` |
@@ -391,6 +409,8 @@ When both sides changed since the last sync:
 | `--pull-only` | Only remote → local |
 | `--poll-interval N` | Seconds between scan polls (default: 5) |
 | `--poll-timeout N` | Max wait for remote scan (default: 120) |
+| `--llm-model MODEL` | Override profile `llm_model` for this run (used by `syncript copilot run`) |
+| `--socks-proxy URL` | Override profile `socks_proxy` for this run |
 
 ---
 

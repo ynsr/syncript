@@ -16,6 +16,8 @@ SSH_USER = "root"
 # Path to your private key, or None to use ssh-agent / ~/.ssh/id_*
 SSH_KEY_PATH: Optional[str] = None  # e.g. r"C:\Users\bs\.ssh\id_rsa"
 SSH_PASSWORD: Optional[str] = None  # only if you use password auth
+SOCKS_PROXY: Optional[str] = None   # e.g. socks5://user:pass@host:port
+LLM_MODEL: Optional[str] = None     # default model for `syncript copilot run`
 
 LOCAL_ROOT = Path(".")
 REMOTE_ROOT = PurePosixPath("/")
@@ -153,6 +155,7 @@ def apply_profile(profile: dict):
                    batch_file_size (max compressed bytes per tar.gz batch).
     """
     global SSH_HOST, SSH_PORT, SSH_USER, SSH_KEY_PATH, SSH_PASSWORD
+    global SOCKS_PROXY, LLM_MODEL
     global LOCAL_ROOT, REMOTE_ROOT, BATCH_FILE_SIZE
 
     if "server" in profile:
@@ -167,6 +170,10 @@ def apply_profile(profile: dict):
         SSH_KEY_PATH = str(profile["ssh_key"]) if profile["ssh_key"] else None
     if "ssh_password" in profile:
         SSH_PASSWORD = str(profile["ssh_password"]) if profile["ssh_password"] else None
+    if "socks_proxy" in profile:
+        SOCKS_PROXY = str(profile["socks_proxy"]) if profile["socks_proxy"] else None
+    if "llm_model" in profile:
+        LLM_MODEL = str(profile["llm_model"]) if profile["llm_model"] else None
     if "local_root" in profile:
         LOCAL_ROOT = Path(profile["local_root"]).expanduser().resolve()
     if "remote_root" in profile:
