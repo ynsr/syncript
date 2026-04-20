@@ -200,6 +200,14 @@ def decide(local_files: dict[str, tuple[float, int]],
                         f"size {prev_rsize}→{r_size})"
                     )
             reason = "; ".join(reason_parts) if reason_parts else "both sides changed since last sync"
+            # Snapshot both sides at conflict time so unresolved snapshots do not
+            # re-trigger the same conflict forever on the next run.
+            # If the user then edits local to resolve, that edit is still detected
+            # as a normal local change and gets pushed.
+            state[rel] = {
+                "lmtime": l_mtime, "lsize": l_size,
+                "rmtime": r_mtime, "rsize": r_size,
+            }
             plan["conflicts"].append((rel, reason))
             continue
 

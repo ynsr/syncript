@@ -16,7 +16,10 @@
 
 # Directories (prune entire trees)
 **/node_modules/**
-**/target/**
+**/target/classes/**
+**/target/*.jar
+**/target/*.jar*
+**/target/**/*.class
 temp/**
 .idea/**
 .stfolder/**

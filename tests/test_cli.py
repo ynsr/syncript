@@ -595,6 +595,52 @@ class TestBatchFileSizeConfig(unittest.TestCase):
             tmpdir.cleanup()
 
 
+class TestConflictStateSnapshot(unittest.TestCase):
+    """Tests conflict snapshotting in decide() to prevent duplicate conflicts."""
+
+    def test_conflict_updates_state_and_is_not_repeated(self):
+        """A detected conflict snapshots state and is skipped on immediate next plan."""
+        from syncript.core.sync_engine import decide
+
+        rel = "tests/test_cli.py"
+        local_files = {rel: (200.0, 20)}
+        remote_files = {rel: (210.0, 21)}
+        state = {
+            rel: {"lmtime": 100.0, "lsize": 10, "rmtime": 100.0, "rsize": 10}
+        }
+
+        plan_1 = decide(local_files, remote_files, state, {}, False, False)
+        self.assertEqual(len(plan_1["conflicts"]), 1)
+        self.assertEqual(state[rel]["lmtime"], 200.0)
+        self.assertEqual(state[rel]["lsize"], 20)
+        self.assertEqual(state[rel]["rmtime"], 210.0)
+        self.assertEqual(state[rel]["rsize"], 21)
+
+        plan_2 = decide(local_files, remote_files, state, {}, False, False)
+        self.assertEqual(plan_2["conflicts"], [])
+        self.assertEqual(plan_2["to_push"], [])
+        self.assertEqual(plan_2["to_pull"], [])
+
+    def test_local_edit_after_conflict_snapshot_becomes_push(self):
+        """After conflict snapshot, a later local-only edit must be planned as push."""
+        from syncript.core.sync_engine import decide
+
+        rel = "tests/test_cli.py"
+        local_files = {rel: (200.0, 20)}
+        remote_files = {rel: (210.0, 21)}
+        state = {
+            rel: {"lmtime": 100.0, "lsize": 10, "rmtime": 100.0, "rsize": 10}
+        }
+
+        decide(local_files, remote_files, state, {}, False, False)
+
+        local_files_resolved = {rel: (220.0, 25)}
+        plan = decide(local_files_resolved, remote_files, state, {}, False, False)
+        self.assertEqual(plan["conflicts"], [])
+        self.assertEqual(plan["to_pull"], [])
+        self.assertEqual(plan["to_push"], [(rel, mock.ANY)])
+        self.assertEqual(plan["to_push"][0][0], rel)
+
 class TestMakeSizeBatches(unittest.TestCase):
     """Tests for _make_size_batches and _estimate_compressed_size helpers."""
 
@@ -686,6 +732,37 @@ class TestSocksProxyParsing(unittest.TestCase):
         from syncript.core.ssh_manager import _parse_socks_proxy_url
         with self.assertRaises(ValueError):
             _parse_socks_proxy_url("http://proxy.local:8080")
+
+
+class TestRemoteScanCommand(unittest.TestCase):
+    """Tests for remote scan command construction."""
+
+    def test_start_remote_scan_quotes_remote_root(self):
+        from pathlib import PurePosixPath
+        import syncript.config as cfg
+        from syncript.operations.scanner import start_remote_scan
+
+        old_remote_root = cfg.REMOTE_ROOT
+        old_local_root = cfg.LOCAL_ROOT
+        old_remote_tmp = cfg.REMOTE_TMP
+        cfg.REMOTE_ROOT = PurePosixPath("/home/user/My Project/repo")
+        cfg.REMOTE_TMP = "/tmp"
+        with tempfile.TemporaryDirectory() as tmp:
+            cfg.LOCAL_ROOT = Path(tmp)
+            try:
+                mgr = mock.Mock()
+                with mock.patch("syncript.operations.scanner.uuid.uuid4") as uuid_mock:
+                    uuid_mock.return_value.hex = "abc123"
+                    marker = start_remote_scan(mgr, [])
+
+                self.assertEqual(marker, "/tmp/sync_scan_abc123.done")
+                mgr.exec_nowait.assert_called_once()
+                find_cmd = mgr.exec_nowait.call_args.args[0]
+                self.assertIn("find '/home/user/My Project/repo'", find_cmd)
+            finally:
+                cfg.REMOTE_ROOT = old_remote_root
+                cfg.LOCAL_ROOT = old_local_root
+                cfg.REMOTE_TMP = old_remote_tmp
 
 
 if __name__ == "__main__":
