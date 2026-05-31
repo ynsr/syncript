@@ -6,7 +6,7 @@
 #   ./install-unix.sh              # install
 #   ./install-unix.sh --uninstall  # remove installed files
 #   ./install-unix.sh --force      # reinstall even if already present
-#   ./install-unix.sh --llm-model=gpt-5.3-codex --socks-proxy=socks5://localhost:10808
+#   ./install-unix.sh --llm-model=gpt-5.2-codex --socks-proxy=socks5://localhost:10808
 #
 # What this script does:
 #   1. Checks that python3 and pip are available.
@@ -197,7 +197,7 @@ else
         read -r BASE_REMOTE
     fi
     if [ -z "$LLM_MODEL" ] && [ -t 0 ]; then
-        printf 'Default LLM model for copilot [gpt-5.3-codex]: '
+        printf 'Default LLM model for copilot [gpt-5.2-codex]: '
         read -r LLM_MODEL
     fi
     if [ -z "$SOCKS_PROXY" ] && [ -t 0 ]; then
@@ -205,7 +205,7 @@ else
         read -r SOCKS_PROXY
     fi
 
-    llm_model_val="${LLM_MODEL:-gpt-5.3-codex}"
+    llm_model_val="${LLM_MODEL:-gpt-5.2-codex}"
     socks_proxy_val="${SOCKS_PROXY}"
 
     cat > "$CONFIG_FILE" << YAML_EOF

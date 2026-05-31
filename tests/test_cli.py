@@ -407,7 +407,7 @@ class TestInitCommand(unittest.TestCase):
         self.assertIn("profiles", data)
         self.assertEqual(data["profiles"][0]["server"], "myhost.com")
         self.assertEqual(data["profiles"][0]["port"], 2222)
-        self.assertEqual(data["profiles"][0]["llm_model"], "gpt-5.3-codex")
+        self.assertEqual(data["profiles"][0]["llm_model"], "gpt-5.2-codex")
         self.assertEqual(data["profiles"][0]["socks_proxy"], "")
 
     def test_init_accepts_llm_model_and_socks_proxy(self):
@@ -459,7 +459,7 @@ class TestInstallerIdempotency(unittest.TestCase):
             f"--server=testserver.example.com",
             f"--base-remote=/home/testuser",
             f"--port=22",
-            f"--llm-model=gpt-5.3-codex",
+            f"--llm-model=gpt-5.2-codex",
             f"--socks-proxy=socks5://localhost:10808",
         ]
         if extra_args:
@@ -498,7 +498,7 @@ class TestInstallerIdempotency(unittest.TestCase):
         self.assertTrue(config_file.exists(), f"Config not found at {config_file}")
         content = config_file.read_text(encoding="utf-8")
         self.assertIn("testserver.example.com", content)
-        self.assertIn('llm_model: "gpt-5.3-codex"', content)
+        self.assertIn('llm_model: "gpt-5.2-codex"', content)
         self.assertIn('socks_proxy: "socks5://localhost:10808"', content)
 
     def test_installer_config_not_overwritten_on_second_run(self):

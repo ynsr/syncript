@@ -31,7 +31,7 @@ from .utils.logging import log, warn
 REMOTE_LOGS_DIR = "~/.syncript/logs"
 _FNAME_TS_RE = re.compile(r"(\d{8})-(\d{6})\.log$")
 LOG_RETENTION_DAYS = 30
-DEFAULT_MODEL = "gpt-5.3-codex"
+DEFAULT_MODEL = "gpt-5.2-codex"
 STREAM_POLL_INTERVAL = 10    # seconds between log polls
 RECONNECT_WAIT = 5           # seconds before reconnect attempt
 
@@ -341,7 +341,7 @@ def run_copilot(extra_args: list, model=None, autopilot: bool = False, verbose: 
         f"copilot --yolo {autopilot_flag}"
         f'-p "Read \'task.prompt.md\' file for the actual prompt" '
         f"--share {log_file} "
-        f"--resume {session_id} "
+        f"--session-id {session_id} "
         + " ".join(copilot_args)
     )
 

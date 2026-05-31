@@ -88,7 +88,7 @@ Options:
   --server HOST       SSH server hostname or IP
   --port N            SSH port (default: 22)
   --base-remote PATH  Base remote path prepended to relative remote roots
-  --llm-model MODEL   Default model for syncript copilot run (default: gpt-5.3-codex)
+  --llm-model MODEL   Default model for syncript copilot run (default: gpt-5.2-codex)
   --socks-proxy URL   Optional SOCKS proxy (sample: socks5://localhost:10808)
   --profile NAME      Profile name (default: "default")
   --force             Overwrite an existing .syncript
@@ -205,7 +205,7 @@ Actions:
 syncript copilot run [options] [-- COPILOT_ARGS...]
 
 Options:
-  --model MODEL         Model passed to copilot (default: gpt-5.3-codex or profile llm_model)
+  --model MODEL         Model passed to copilot (default: gpt-5.2-codex or profile llm_model)
   --resume SESSION_ID   Re-launch and continue an existing session (or "latest")
   --autopilot           Pass --autopilot to copilot
   -v, --verbose         Show extra output
@@ -244,7 +244,7 @@ This sends SIGTERM to the matching remote process and appends a stop marker to i
 
 ```bash
 # Start a new remote copilot session and stream output
-syncript copilot run --model gpt-5.3-codex -- "Fix failing test in sync scanner"
+syncript copilot run --model gpt-5.2-codex -- "Fix failing test in sync scanner"
 
 # Resume the most recent session
 syncript copilot run --resume latest
@@ -268,7 +268,7 @@ profiles:
     port: 22
     local_root: "./"
     remote_root: "projects/myrepo"   # relative to defaults.base_remote
-    llm_model: "gpt-5.3-codex"       # default model used by syncript copilot run
+    llm_model: "gpt-5.2-codex"       # default model used by syncript copilot run
     socks_proxy: "socks5://localhost:10808" # optional: route network traffic via SOCKS proxy
 
   - name: staging

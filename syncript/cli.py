@@ -107,7 +107,7 @@ def cmd_init(args):
 
     # Resolve base_remote
     base_remote = args.base_remote or g_defaults.get("base_remote", "")
-    llm_model = args.llm_model or g_defaults.get("llm_model", "gpt-5.3-codex")
+    llm_model = args.llm_model or g_defaults.get("llm_model", "gpt-5.2-codex")
     if not args.llm_model and sys.stdin.isatty():
         val = input(f"Default LLM model for copilot [{llm_model}]: ").strip()
         if val:
@@ -408,7 +408,7 @@ def main():
     init_p.add_argument("--base-remote", metavar="PATH",
                         help="Base remote path prepended to relative remote roots")
     init_p.add_argument("--llm-model", metavar="MODEL", default=None,
-                        help="Default model used by 'syncript copilot run' (default: gpt-5.3-codex)")
+                        help="Default model used by 'syncript copilot run' (default: gpt-5.2-codex)")
     init_p.add_argument("--socks-proxy", metavar="URL", default=None,
                         help="SOCKS proxy URL for network operations, e.g. socks5://localhost:10808")
     init_p.add_argument("--profile", metavar="NAME", default="default",
@@ -483,7 +483,7 @@ def main():
     )
     run_p.add_argument("-v", "--verbose", action="store_true", help="Show extra output")
     run_p.add_argument("--model", metavar="MODEL", default=None,
-                       help="Model for copilot (default: gpt-5.3-codex)")
+                       help="Model for copilot (default: gpt-5.2-codex)")
     run_p.add_argument("--resume", metavar="SESSION_ID", default=None,
                        help="Resume streaming an existing copilot session log (use 'latest' for the most recent)")
     run_p.add_argument("--autopilot", action="store_true",

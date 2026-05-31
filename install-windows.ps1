@@ -6,7 +6,7 @@
 #   .\install-windows.ps1 -Uninstall       # remove installed files
 #   .\install-windows.ps1 -Force           # reinstall even if already present
 #   .\install-windows.ps1 -Server myhost -BaseRemote /home/user -Port 22
-#   .\install-windows.ps1 -LlmModel gpt-5.3-codex -SocksProxy socks5://localhost:10808
+#   .\install-windows.ps1 -LlmModel gpt-5.2-codex -SocksProxy socks5://localhost:10808
 #
 # What this script does:
 #   1. Checks that Python 3 and pip are available.
@@ -181,7 +181,7 @@ if ((Test-Path $ConfigFile) -and -not $Force) {
         $BaseRemote = Read-Host "Base remote path (e.g. /home/user, leave blank to skip)"
     }
     if (-not $LlmModel -and [Environment]::UserInteractive) {
-        $LlmModel = Read-Host "Default LLM model for copilot (default: gpt-5.3-codex)"
+        $LlmModel = Read-Host "Default LLM model for copilot (default: gpt-5.2-codex)"
     }
     if (-not $SocksProxy -and [Environment]::UserInteractive) {
         $SocksProxy = Read-Host "SOCKS proxy URL (optional, sample: socks5://localhost:10808)"
@@ -189,7 +189,7 @@ if ((Test-Path $ConfigFile) -and -not $Force) {
 
     $baseRemoteVal = if ($BaseRemote) { $BaseRemote } else { "/home/user" }
     $serverVal     = if ($Server)     { $Server }     else { "example.com" }
-    $llmModelVal   = if ($LlmModel)   { $LlmModel }   else { "gpt-5.3-codex" }
+    $llmModelVal   = if ($LlmModel)   { $LlmModel }   else { "gpt-5.2-codex" }
     $socksProxyVal = if ($SocksProxy) { $SocksProxy } else { "" }
 
     @"

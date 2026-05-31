@@ -10,5 +10,5 @@ copilot() {
     return 1
   fi
   # command copilot --autopilot --model claude-sonnet-4.5 "$@"
-  command copilot --autopilot --model gpt-5.3-codex "$@"
+  command copilot --autopilot --model gpt-5.2-codex "$@"
 }
